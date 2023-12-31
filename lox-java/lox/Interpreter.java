@@ -5,6 +5,22 @@ import java.util.List;
 public class Interpreter<Environment> implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
   final Environment globals = new Environment();
   private Environment environment = globals;
+  Interpreter() {
+    globals.define("clock", new LoxCallable() {
+      @Override
+      public int arity() {
+        return 0;
+      }
+      @Override
+      public Object call(Interpreter interpreter, List<Object> arguments) {
+        return (double)System.currentTimeMillis() / 1000.0;
+      }
+      @Override
+      public String toString() {
+        return "<native fn>";
+      }
+    });
+  }
   void interpret(List<Stmt> statements) {
     try {
       for (Stmt statement : statements) {
