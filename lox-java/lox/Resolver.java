@@ -4,11 +4,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.Stack;
+import java.util.function.Function;
 
 
 class Resolver implements ExprVisitor<Void>, Stmt.Visitor<Void> {
   private final Interpreter interpreter;
   private final Stack<Map<String, Boolean>> scopes = new Stack<>();
+  private FunctionType currentFunction = FunctionType.NONE;
+  private enum FunctionType {
+    NONE,
+    FUNCTION
+  }
 
   Resolver(Interpreter interpreter) {
     this.interpreter = interpreter;
@@ -21,7 +27,12 @@ class Resolver implements ExprVisitor<Void>, Stmt.Visitor<Void> {
   private void resolve(Stmt stmt) {
     stmt.accept(this);
   }
-  private void resolveFunction(Stmt.Function function) {
+  private void resolveFunction(
+    Stmt.Function.function,
+    FunctionType type
+  ) {
+    FunctionType enclosingFunction = currentFunction;
+    currentFunction = type;
     beginScope();
     for (Token param : function.params) {
       declare(param);
@@ -29,6 +40,7 @@ class Resolver implements ExprVisitor<Void>, Stmt.Visitor<Void> {
     }
     resolve(function.body);
     endScope();
+    currentFunction = enclosingFunction;
   }
 
   private void beginScope() {
@@ -78,7 +90,15 @@ class Resolver implements ExprVisitor<Void>, Stmt.Visitor<Void> {
   }
   @Override
   public Void visitReturnStmt(Stmt.Return stmt) {
-    if (stmt.value != null) resolve(stmt.value);
+    if (currentFunction == FunctionType.NONE) {
+      Lox.error(stmt.keyword, "Can't return from top-level code.");
+    }
+    if (stmt.value != null) {
+      if (currentFunction == FunctionType.NONE) {
+        Lox.error(stmt.keyword, "Can't return a value from an initializer.");
+      }
+      resolve(stmt.value);
+    }
     return null;
   }
   @Override
@@ -91,7 +111,7 @@ class Resolver implements ExprVisitor<Void>, Stmt.Visitor<Void> {
   public Void visitFunctionStmt(Stmt.Function stmt) {
     declare(stmt.name);
     define(stmt.name);
-    resolveFunction(stmt);
+    resolveFunction(stmt, FunctionType.FUNCTION);
     return null;
   }
   @Override
