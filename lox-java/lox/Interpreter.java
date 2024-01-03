@@ -89,6 +89,11 @@ public class Interpreter<Environment> implements Expr.Visitor<Object>, Stmt.Visi
   @Override
   public Void visitClassStmt(Stmt.Class stmt) {
     environment.define(stmt.name.lexeme, null);
+    Map<String, LoxFunction> methods = new HashMap<>();
+    for (Stmt.Function method : stmt.methods) {
+      LoxFunction function = new LoxFunction(method, environment);
+      methods.put(method.name.lexeme, function);
+    }
     return null;
   }
   @Override

@@ -13,7 +13,8 @@ class Resolver implements ExprVisitor<Void>, Stmt.Visitor<Void> {
   private FunctionType currentFunction = FunctionType.NONE;
   private enum FunctionType {
     NONE,
-    FUNCTION
+    FUNCTION,
+    METHOD
   }
 
   Resolver(Interpreter interpreter) {
@@ -80,6 +81,13 @@ class Resolver implements ExprVisitor<Void>, Stmt.Visitor<Void> {
   public Void visitClassStmt(Stmt.Class stmt) {
     declare(stmt.name);
     define(stmt.name);
+    beginScope();
+    scopes.peek().put("this", true);
+    for (Stmt.Function metod : stmt.methods) {
+      FunctionType declaration = FunctionType.METHOD;
+      resolveFunction(metod, declaration);
+    }
+    endScope();
     return null;
   }
   @Override
@@ -178,6 +186,15 @@ class Resolver implements ExprVisitor<Void>, Stmt.Visitor<Void> {
   public Void visitSetExpr(Expr.Set expr) {
     resolve(expr.value);
     resolve(expr.object);
+    return null;
+  }
+  @Override
+  public Void visitThisExpr(Expr.This expr) {
+    if (currentClass == ClassType.NONE) {
+      Lox.error(expr.keyword, "Can't use 'this' outside of a class.");
+      return null;
+    }
+    resolveLocal(expr, expr.keyword);
     return null;
   }
   @Override
