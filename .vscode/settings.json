@@ -2,6 +2,17 @@
   "files.associations": {
     "common.h": "c",
     "chunk.h": "c",
-    "debug.h": "c"
+    "debug.h": "c",
+    "value.h": "c",
+    "memory.h": "c",
+    "__bit_reference": "c",
+    "__hash_table": "c",
+    "__split_buffer": "c",
+    "array": "c",
+    "iterator": "c",
+    "string": "c",
+    "string_view": "c",
+    "unordered_map": "c",
+    "vector": "c"
   }
 }
